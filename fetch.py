@@ -7,13 +7,15 @@ import hashlib
 from datetime import datetime
 from botocore.exceptions import ClientError, EndpointConnectionError
 
-#Fetching the configurations
+#Fetching the configurations for posgtgresql and localstack sqs queue URL
 queue_url = 'http://localhost:4566/000000000000/login-queue'
 database_url = 'postgresql://postgres:postgres@localhost:5432/postgres'
 
+#defining a function to mask the personal indentifying information (pii)
 def pii(value):
     return hashlib.sha256(value.encode()).hexdigest()
 
+#defining sqs_message function to recieve and read the message from SQS queue
 def sqs_message():
     sqs = boto3.client('sqs', endpoint_url='http://localhost:4566')
     for attempt in range(5):
@@ -31,7 +33,7 @@ def sqs_message():
             time.sleep(2 ** attempt)  # type: ignore # Exponential backoff
     raise RuntimeError("Failed to receive messages after multiple attempts")
 
-
+#tranforming it into a format desired in the postgresql to load it back into it
 def transform_message(message):
     body = json.loads(message['Body'])
     user_id = body['user_id']
@@ -44,6 +46,7 @@ def transform_message(message):
 
     return (user_id, device_type, masked_ip, masked_device_id, locale, app_version, create_date)
 
+#defining another function to write the changes done back into the posgres database
 def write_to_postgresql(records):
     con = psycopg2.connect(database_url)
     cur = con.cursor()
@@ -56,6 +59,7 @@ def write_to_postgresql(records):
     cur.close()
     con.close()
 
+# main function consists of the entire code sequence and link between the function to run the code
 def main():
     try:
         messages = sqs_message()
