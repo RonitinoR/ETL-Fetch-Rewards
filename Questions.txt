@@ -1,0 +1,22 @@
+# Questions
+
+**To deploy this application in prodcution**:
+1. The application can be containerized through Docker.
+2. Using cloud platforms like AWS ECS and Kubernetes to deploy the application by taking scalability, reliability, flexibility and cost management into consideration.
+
+**Additional production-ready components**:
+1. Logging and monitoring (eg. AWS CloudWatch).
+2. Error handling and alerting.
+3. CI/CD pipeline for automated deployment.
+
+**Scalability options for the application with a growing dataset**:
+1. Adopting horizontal scaling through sharding or partitioning techniques.
+2. Leveraging NoSQL databases with automatic scaling capabilities.
+
+PII data can be recovered later on by securely storing the original PII data and associating it with the hashed values, further more by implementing the role-based access control to restrict access to sensitive data.
+
+**Assumptions**:
+1. The application is running on a single server or container.
+2. The SQS queue and PostgreSQL table are pre-configured and available.
+3. The input data format is consistent and matches with the expected schema.
+4. Proper access controls and security measures are in place to protect sensitive data.
