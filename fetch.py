@@ -23,8 +23,9 @@ def sqs_message():
             print("Attempting to receive messages...")
             response = sqs.receive_message(
                 QueueUrl = queue_url,
-                MaxNumberOfMessages = 10,
-                WaitTimeSeconds = 5
+                MaxNumberOfMessages = 100,
+                VisibilityTimeout = 0,
+                WaitTimeSeconds = 0
             )
             print(f"Response from SQS: {response}")
             return response.get('Messages', [])
@@ -47,17 +48,15 @@ def transform_message(message):
     return (user_id, device_type, masked_ip, masked_device_id, locale, app_version, create_date)
 
 #defining another function to write the changes done back into the posgres database
+# Function to write records to PostgreSQL
 def write_to_postgresql(records):
-    con = psycopg2.connect(database_url)
-    cur = con.cursor()
-    cur.executemany("""
-        INSERT INTO user_logins (user_id, device_type, masked_ip, masked_device_id, locale, app_version, create_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, records)
-    
-    con.commit()
-    cur.close()
-    con.close()
+    with psycopg2.connect(database_url) as con:
+        with con.cursor() as cur:
+            cur.executemany("""
+                INSERT INTO user_logins (user_id, device_type, masked_ip, masked_device_id, locale, app_version, create_date)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, records)
+            con.commit()
 
 # main function consists of the entire code sequence and link between the function to run the code
 def main():
