@@ -1,28 +1,34 @@
 # Fetch Rewards
-# ETL Process for the login details
+# ETL from SQS to PostgreSQL
 
 ## Overview
 
-This is a simple ETL (Extract, Transform, Load) process that: 
+This project demonstrates an ETL(Extract, Transform and Load) process that: 
 
-1. Reads user login data from an AWS SQS (Simple Queue Service) Queue,
-2. Masks sensitive information,
-3. And then stores the data into a PostgreSQL database.
+1. Reads `user_logins` data which is in JSON format, from an AWS SQS (Simple Queue Service) Queue.
+2. Masks the personal identifying information (pii).
+3. Transforms and then stores the data back into the PostgreSQL database.
 
 The process is run locally using Docker and LocalStack to simulate the AWS services.
 
 ## Prerequisites
 
-Before running the ETL process, ensure the following are installed:
+Before running the ETL process, ensure the following prerequisites are installed:
 
 1. Docker: To create a local environment with the necessary services.
-2. Python: To execute the ETL script.
+2. Docker compose.
+3. `awscli-local`: If not installed, you can install it using the command `pip install awscli-local`.
+4. PostgreSQL client (`psql`).
 
 ## Setup
 
-1. Clone the repository to your local machine.
+1. **Clone the repository** to your local desktop:
+   ```sh
+   git clone <repository-URL>
+   cd <repository-directory>
+   
 2. Make sure Docker is running.
-3. Make sure you have aws cli installed 
+3. Make sure you have aws cli installed. 
 
 ## Running the ETL Process
 
@@ -33,18 +39,20 @@ Before running the ETL process, ensure the following are installed:
         python3 -m venv venv
         source venv/bin/activate
 
-5. Run the following command to start the local environment:
+4. Make sure the `reuirements.txt` file consisting of the library installations required to run script by using the command:
+
+        pip install -r requirements.txt
+   
+5. Run the following command to build and run the docker containers:
 
          docker-compose up 
 
-
-6. make sure the docker compose yaml file is correct .
-
+*Note*: Before running the above command make sure the docker compose yaml file is correct consisting of the proper image urls.
 
 This will create a local environment with AWS services and a PostgreSQL database.
 
-4. Open another terminal or command prompt and navigate to the same directory.
-5. Run the ETL script by executing the following command:
+6. Open another terminal or command prompt and navigate to the same directory.
+7. Run the ETL script by executing the following command:
 
           python fetch.py
 
@@ -52,28 +60,23 @@ The script will read user login data from the SQS Queue, mask sensitive informat
 
 ## Checking the Database
 
-To check if the data was successfully loaded into the database, follow these steps:
+To verify whether the `user_logins` table is succesfully loaded to postgreSQL database, you need to connect to the database by running the following commands:
 
-1. Open a web browser.
-2. Access the PostgreSQL web interface using the following URL:
+        psql -d postgres -U postgres -p 5433 -h localhost -W
 
-http://localhost:8080
+        SELECT * FROM user_logins;
 
-Username: postgres
-Password: postgres
+## Thought Process
 
+1. **Data Masking**: SHA-256 hashing is used in the script to mask `device_id` and `ip` fields while allowing for duplicate detection.
+2. **Error Handling**: To handle the exceptions while receiving SQS messages, implemented retries with exponential backoff.
+3. **Context Managers**: Ensured proper handling of database connection through context managers.
 
-4. Once logged in, you should see the `user_logins` table.
-5. Click on the `user_logins` table to view the data.
+## Future Improvements
 
-## Important Note
-
-This ETL process is designed for demonstration purposes and uses a simplified environment. In a real-world scenario, you would set up AWS SQS and PostgreSQL in a cloud environment for better scalability and security.
-
-
-
-
-
+1. **Scalability**: For larger dataset operations message batching and parallel processing can be implemented.
+2. **Deployment**: This application can be deployed on cloud platoforms such as AWS ECS or Kubernetes by containerizing it.
+3. **Monitoring**: To have better visiblity and error tracking, logging and monitoring can be added.
 
 ## Troubleshooting
 
